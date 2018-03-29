@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+#ifort -check all -o exe inside.f90 blackmod.f90 heat.f90
+gfortran -o exe inside.f90 blackmod.f90 heat.f90
+#
+./exe
+#
+#
+rm *.mod
+#
+rm ./exe
+#
