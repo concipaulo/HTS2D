@@ -18,14 +18,14 @@ implicit none
 !
 ! Number of outer iterations on main program
 ! Steady state set this = 0
-    integer*4, parameter :: itr_max = 2000
+  integer*4, parameter :: itr_max = 1
 ! Norm of temperature between two time steps
     real*8, parameter :: epsolon = 10.0d-6
 !
 ! msh are options: mesh100, mesh500, mesh1500, mesh2500, 
 ! mesh5000, mesh10000, mesh15000, mesh40000
   character(*), parameter :: extension = '.dat'
-  character(*), parameter :: mshname = 'mesh500'
+  character(*), parameter :: mshname = 'meshrtgl500'
 ! concatenating the mesh name and the extension
   character(*), parameter :: meshfile = mshname//extension
 ! Chosing the iterative method and the preconditioner
@@ -35,7 +35,7 @@ implicit none
 ! 4 == GMRES w/ ILUT
 ! 5 == GMRES w/ MILU0
 ! 6 == GMRES w/ ILU(K)
-    integer(kind=4), parameter :: choice = 6
+  integer(kind=4), parameter :: choice = 6
 !
 ! Chosing the type of analysis
 ! 1 == unsteady state
@@ -43,7 +43,7 @@ implicit none
 ! 3 == steady state fourth order discretization
 !
 ! REMEMBER IF IS IN STATE STATE SET ITR_MAX = 0
-    integer(kind=4), parameter :: choice2 = 1
+    integer(kind=4), parameter :: choice2 = 2
 !
 !
 ! This parameter is for subroutine log and sol_exact
@@ -61,7 +61,8 @@ implicit none
     character(*), parameter :: filename = 'sol_aproximate.plt'
     character(*), parameter :: filename_exact = 'sol_exact.plt'
     character(*), parameter :: savename = 'save_sol.dat'
-    character(*), parameter :: mshdir = '/home/vedat/HTS2D/mesh/'
+!******************************************************************************
+    character(*), parameter :: mshdir = '/home/arpati/HTS2D/mesh/'
 !
 end module chars
 !******************************************************************************
@@ -77,3 +78,66 @@ module physics
    real*8 :: deltat = 0.00518d0             ! [SECS]
 !
 end module physics
+!******************************************************************************
+module constants
+implicit none
+!
+real*8, parameter :: wall_one_n = 1
+real*8, parameter :: wall_one_tt = 0
+real*8, parameter :: wall_one_tl = 0
+real*8, parameter :: wall_one_td = 0
+real*8, parameter :: wall_one_trt = 0
+real*8, parameter :: wall_one_tlt = 0
+!
+real*8, parameter :: wall_two_n = 1
+real*8, parameter :: wall_two_tr = 0
+real*8, parameter :: wall_two_tl = 0
+real*8, parameter :: wall_two_td = 0
+real*8, parameter :: wall_two_tlt = 0
+real*8, parameter :: wall_two_tld = 0
+!
+real*8, parameter :: wall_three_n = 1
+real*8, parameter :: wall_three_tr = 0
+real*8, parameter :: wall_three_tt = 0
+real*8, parameter :: wall_three_td = 0
+real*8, parameter :: wall_three_trd = 0
+real*8, parameter :: wall_three_tld = 0
+!
+real*8, parameter :: wall_four_n = 1
+real*8, parameter :: wall_four_tr = 0
+real*8, parameter :: wall_four_tt = 0
+real*8, parameter :: wall_four_tl = 0
+real*8, parameter :: wall_four_trd = 0
+real*8, parameter :: wall_four_trt = 0
+!
+real*8, parameter :: oxoy_n = 1
+real*8, parameter :: oxoy_tr = 0
+real*8, parameter :: oxoy_tt = 0
+real*8, parameter :: oxoy_trt = 0
+!
+real*8, parameter :: oy_xmax_n = 1
+real*8, parameter :: oy_xmax_tt = 0
+real*8, parameter :: oy_xmax_tl = 0
+real*8, parameter :: oy_xmax_tlt = 0
+!
+real*8, parameter :: xmax_ymax_n = 1
+real*8, parameter :: xmax_ymax_tl = 0
+real*8, parameter :: xmax_ymax_td = 0
+real*8, parameter :: xmax_ymax_tld = 0
+!
+real*8, parameter :: ox_ymax_n = 1
+real*8, parameter :: ox_ymax_tr = 0
+real*8, parameter :: ox_ymax_td = 0
+real*8, parameter :: ox_ymax_trd = 0
+!
+real*8, parameter :: interior_n = 4/(1.0d0**2)
+real*8, parameter :: interior_tr = -1/(1.0d0**2)
+real*8, parameter :: interior_tt = -1/(1.0d0**2)
+real*8, parameter :: interior_tl = -1/(1.0d0**2)
+real*8, parameter :: interior_td = -1/(1.0d0**2)
+real*8, parameter :: interior_trd = 0
+real*8, parameter :: interior_trt = 0
+real*8, parameter :: interior_tlt = 0
+real*8, parameter :: interior_tld = 0
+!
+end module constants

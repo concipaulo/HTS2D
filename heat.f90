@@ -5,6 +5,7 @@ use parmesh
 use chars
 use physics
 use parsolvers
+use constants
 implicit none
 !
 ! HTS2D is a Fortran 95/03 implementation, of GMRES method to solve a linear
@@ -19,7 +20,7 @@ implicit none
 !tines.
 !
 ! Counting variables
-   integer*4 :: stat, lin, cls, i, nz_num, delt
+   integer*4 :: stat, lin, cls, i, j, nz_num, delt
    integer*4 :: nodes
 !
 ! Time variables
@@ -38,6 +39,8 @@ implicit none
    integer(kind=4) :: iwk, ierr, im, getcwd
    real*8 ::  normt
    real*8, allocatable, dimension(:,:) :: alin
+   integer(kind=4), allocatable, dimension(:,:) :: conn
+   integer(kind=4), allocatable, dimension(:,:) :: connfth
    real*8, allocatable, dimension(:) :: rhs
    real*8, allocatable, dimension(:) :: x
    real*8, allocatable, dimension(:) :: x0
@@ -110,7 +113,7 @@ implicit none
 3 format(a, I1)
     if(choice2 .eq. 1)then
       write(*,*) 'Unsteady State'
-    elseif((choice2 .eq. 2).or. (choice2 .eq. 3))then
+    elseif((choice2 .eq. 2) .or. (choice2 .eq. 3))then
       write(*,*) 'Steady State'
     endif
 !
@@ -125,10 +128,10 @@ implicit none
     dirname = trim(adjustl(trim(dirname)))
 !
     open(unit=2, file=mshdir//meshfile, status= 'old', iostat = stat)
-    open(unit=43, file= trim(adjustl(trim(dirname)))//'residual_timemachine.plt', status='unknown')
-    open(unit=44, file= trim(adjustl(trim(dirname)))//'residual_iteration.plt', status='unknown')
-    open(unit=45, file= trim(adjustl(trim(dirname)))//'residual_timephysics.plt', status='unknown')
-    open(unit=80, file= trim(adjustl(trim(dirname)))//savename, status='unknown')
+    open(unit=43, file= trim(adjustl(trim(dirname))//'residual_timemachine.plt'), status='unknown')
+    open(unit=44, file= trim(adjustl(trim(dirname))//'residual_iteration.plt'), status='unknown')
+    open(unit=45, file= trim(adjustl(trim(dirname))//'residual_timephysics.plt'), status='unknown')
+    open(unit=80, file= trim(adjustl(trim(dirname))//savename), status='unknown')
 !
 ! Counting how many number are on the mesh file
 !for allocate after (this will use only the necessary memory)
@@ -150,6 +153,8 @@ implicit none
    allocate (x(nodes))
    allocate (x0(nodes))
    allocate (time(itr_max))
+   allocate (conn(nodes,9))
+   ! allocate (connfth(nodes,9))
 !
 !This will reopen unit two for avoiding reading errors.
   rewind (unit=2)
@@ -172,6 +177,12 @@ implicit none
     msh(i,4) = 1.0d0
   enddo
 !
+  call connect(msh, conn, nodes, dxdy)
+  ! call connect4th(msh,connfth,nodes,dxdy)
+  write(*,13) ((conn(i,j),j=1,9),i=1,nodes)
+!
+!
+13 format(9(I4))
 ! proportion bb
 !    do i = 1, nodes
 !        msh(i,2) = 1.d3 * msh(i,2)
@@ -186,6 +197,7 @@ implicit none
     msh_copy = msh
     x(1:nodes) = msh(1:nodes,4)
 !
+! write(*,*) "HEEEEELLLLLOOOOO MATTY D"
 !Here is the critical part, it's where we read all nodes of mesh and
 !them generate one equation for each node, that is a finite difference
 !equation, we are allocating in alin(i,j) only the the constants terms
@@ -207,30 +219,33 @@ implicit none
 ! LOOOOOOOOOOOOOOOOOOOP
 5 continue
 !
-!getting out of the loop
+!getting out of the loop on steady state
     if((delt .ne. 0) .and. (choice2 .eq. 2))then
         goto 25
     endif
 !
 ! Saving a copy of the initial values of solution to mensurate how the method
 !is behaving
-        t(1:nodes) = x(1:nodes)
+    t(1:nodes) = x(1:nodes)
 !
 ! Starting matrix of constants, at each time step for security
-        alin(1:nodes,1:nodes) = 0.0d0
-        rhs(1:nodes) = 0.0d0
+   alin(1:nodes,1:nodes) = 0.0d0
+   rhs(1:nodes) = 0.0d0
 !
 ! Subroutine responsible to generate constants, this is still an odd way to do
 !it, take and example, if you want to simulate diferent boundary conditions you
 !must change this subroutine. At this time is working, but it'll be implemented
 !in another more user fliendly way.
-        if (choice2 .eq. 1)then
-          call create_a_unsteady(msh, t, nodes, alin, rhs, dxdy)
-        elseif(choice2 .eq. 2)then
-          call create_a_steady(msh, t, nodes, alin, rhs, dxdy)
-        elseif(choice2 .eq. 3)then
-          call create_4_steady(msh, t, nodes, alin, rhs, dxdy)
-        end if
+    if (choice2 .eq. 1)then
+      call create_a_unsteady(msh, t, nodes, alin, rhs, dxdy)
+    elseif(choice2 .eq. 2)then
+      call ccall(conn, nodes, alin, rhs, t)
+    ! write(80,12) ((alin(i,j),j=1,nodes),i=1,nodes)
+    ! 12 format(25(F10.5))
+     ! call create_a_steady(msh, t, nodes, alin, rhs, dxdy)
+    elseif(choice2 .eq. 3)then
+      call create_4_steady(msh, t, nodes, alin, rhs, dxdy)
+    end if
 !Iterative methods
 !==============================================================================
 !solve the linear system with gauss-siedel iterative method
@@ -436,7 +451,7 @@ implicit none
 !
 !storing alin in sparse triplet form
         call pre_gmres(alin, nodes, a, ia, ja, nz_num)
-        if(allocated(alin)) deallocate(alin)
+        ! if(allocated(alin)) deallocate(alin)
 !
 !storing a(nz_num), ja(nz_num) and ia(nz_num) ia CSR
     if (delt .eq. 0)then
@@ -522,9 +537,9 @@ implicit none
 !writing a backup file for power loss or program interruption. Early stages, 
 !this needs a subroutine to read the file and a parameter to tell if it's a 
 !new simulation or a old one.
-        do i=1, nodes
-            write(80,*) i, x(i)
-        enddo
+! do i=1, nodes
+!     write(80,*) i, x(i)
+! enddo
 !
 ! I use TecPlot to plot the graphs, so the value file needs to be formated 
 !before ploting, to use another ploting program probably you will need 
@@ -539,7 +554,8 @@ implicit none
 ! Once we deallocate alin inside the iteration process to save memory ( meshs
 !with 30k nodes, storing real*8 variables, will need up to 6GB of RAM), we need
 !to reallocate that space.
-        allocate(alin(nodes, nodes))
+! write(*,*) "heellloooooo"
+        ! allocate(alin(nodes, nodes))
 !
     goto 5
    end if
@@ -565,23 +581,30 @@ implicit none
 ! Once the problem is simple and has a analytical solution, is possible to 
 !verified how close are the approximate solution by the numerical method and 
 !the exact solution to that problem.
-    if (choice3 .eq. 1)then
+  if (choice3 .eq. 1)then
 !Calculating the exact solution for steady state case
     allocate(x_exact(nodes))
-    call temp_exact(msh_copy, nodes)
-    x_exact(1:nodes) = msh_copy(1:nodes,4)
-!
+    if(choice2 .eq. 2 .or. choice2 .eq. 3) then
+        call temp_exact(msh_copy, nodes)
+        x_exact(1:nodes) = msh_copy(1:nodes,4)
 !printing the exact solution
-    call tcplt(msh_copy, nodes, filename_exact, dxdy, dirname)
-    if(allocated(msh_copy)) deallocate(msh_copy)
+        call tcplt(msh_copy, nodes, filename_exact, dxdy, dirname)
+        if(allocated(msh_copy)) deallocate(msh_copy)
 !Calculate the logarithm error for the steady state
-
-    call logerror(x, x_exact, nodes, dxdy, dirname)
+        call logerror(x, x_exact, nodes, dxdy, dirname)
 !    write(*,*) 'type the next mesh file name'
 !    read (*,*) meshfile
 !    goto3
-!
+    elseif(choice2 .eq. 1) then
+        call reddy(msh_copy, nodes)
+        x_exact(1:nodes) = msh_copy(1:nodes,4)
+        call tcplt(msh_copy, nodes, filename_exact, dxdy, dirname)
+        if(allocated(msh_copy)) deallocate(msh_copy)
+!Calculate the logarithm error for the steady state
+        call logerror(x, x_exact, nodes, dxdy, dirname)
     endif
+!
+  endif
 stop
 !I guess this is THE END.
 end program hts2d

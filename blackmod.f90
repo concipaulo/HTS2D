@@ -28,17 +28,17 @@ implicit none
 !x = xmax
         if(msh(i,2) .eq. mxval)then
         temp(i) = 0.0d0
-! y = ymax and x =/ xmax
+! y = ymax and x =/ xmax and x=/ 0
         elseif(msh(i,3) .eq. myval .and. msh(i,2) .ne. mxval &
         .and. msh(i,2) .ne. 0.0)then
         temp(i) = 0.0d0
 ! care with steady state is needed
-!        crdx = msh(i,2)
-!            call temp_dist(crdx, t)
-!        temp(i) = t
+        crdx = msh(i,2)
+            call temp_dist(crdx, t)
+        temp(i) = t
 !y = ymax
-!        elseif(msh(i,3) .eq. myval)then
-!       temp(i) = 0.0d0
+        elseif(msh(i,3) .eq. myval)then
+       temp(i) = 0.0d0
 ! x = 0
         elseif(msh(i,2) .eq. 0.0d0)then
         temp(i) = 0.0d0
@@ -68,8 +68,8 @@ implicit none
     real(kind=8), intent(out) :: temp
     real(kind=8), parameter :: pi = 4.0d0*datan(1.0_8)
 !
-    temp = dsin(pi*crdx)
-!    temp = 200.d0*sin((3.0d0*pi*crdx)/30.0d0)
+    ! temp = dsin(pi*crdx)
+    temp = 200.d0*dsin((pi*crdx)/30.0d0)
 return
 end subroutine temp_dist
 !********************************************************************************
@@ -86,9 +86,9 @@ implicit none
 !local variables
     integer(kind=4) :: i
     real(kind=8), dimension(nodes) :: temp
-    real(kind=8) :: tm = 1.0d0
-    real(kind=8) :: L = 1.0d0
-    real(kind=8) :: b = 1.0d0
+    real(kind=8) :: tm = 200.0d0
+    real(kind=8) :: L = 30.0d0
+    real(kind=8) :: b = 20.0d0
     real(kind=8), parameter :: pi = 4.0d0*datan(1.0_8)
 !
     do i = 1,nodes
@@ -100,6 +100,52 @@ implicit none
 !
 return
 end subroutine temp_exact
+!********************************************************************************
+subroutine exactreddy(crdx, crdy, t)
+  use physics
+  implicit none
+!
+!External variables
+  real(kind=8), intent(in) :: crdx
+  real(kind=8), intent(in) :: crdy
+!
+! Internal variables
+  real(kind=8), parameter :: pi = 4.0d0*datan(1.0_8)
+  integer(kind=4) :: n
+  real(kind=8) :: an, s, summ, t
+!
+  summ = 0.d0
+  do n = 1, 50
+    an = 0.5d0*(2.d0*dfloat(n) - 1.d0)*pi
+    s = ((-1**n)*cos(an*crdy)*cosh(an*crdx))/((an**3)*cosh(an))
+    summ = summ + s
+    ! write(*,*) "sum is =", summ
+  enddo
+!
+  t = (e/2.d0*k)*((1-crdy**2) + 4.d0*summ)
+return
+stop
+end subroutine exactreddy
+!********************************************************************************
+subroutine reddy(msh, n)
+  implicit none
+!
+!External variables
+integer(kind=4), intent(in) :: n
+real(kind=8), intent(inout), dimension(n,4) :: msh
+!
+!Internal variables
+integer(kind=4) :: i
+real(kind=8) :: t
+!
+  do i = 1, n
+    call exactreddy(msh(i,2), msh(i,3), t)
+    msh(i,4) = t
+  enddo
+!
+return
+stop
+end subroutine reddy
 !********************************************************************************
 subroutine logerror(x, x_exact, nodes, dxdy, dirname)
 !
@@ -141,7 +187,7 @@ implicit none
     loge_inf = dlog10(l_inf)
     logh = abs(dlog10(dxdy))
 !
-    open(unit=12, file= dirname//'logfile.dat', status='unknown')
+    open(unit=12, file= trim(adjustl(trim(dirname)//'logfile.dat')), status='unknown')
     write(12,*) 'L1 norm'
     write(12,10) logh, loge1
     write(12,10) dxdy, l_one
@@ -350,6 +396,367 @@ implicit none
 !
 return
 end subroutine temp_origin
+!********************************************************************************
+! subroutine connect(msh, conn, nodes, dxdy)
+! implicit none
+! !
+! !External variables
+! integer(kind=4) :: nodes
+! real(kind=8), intent(in) :: dxdy
+! real(kind=8), intent(in), dimension(nodes,4) :: msh
+! integer(kind=4), intent(inout), dimension(nodes,5) :: conn
+! !
+! ! Internal variables
+! real(kind=8) :: crdx, crdy, plus_x, plus_y, minus_x, minus_y, eps, xmax, ymax
+! integer(kind=4) :: i,j
+! !
+!     eps = dxdy/2
+!     xmax = maxval(msh(1:nodes,2))
+!     ymax = maxval(msh(1:nodes,3))
+! !
+!     do i=1,nodes
+!         conn(i,1) = msh(i,1)
+!         crdx = msh(i,2)
+!         crdy = msh(i,3)
+!         plus_x = msh(i,2) + dxdy
+!         minus_x = msh(i,2) - dxdy
+!         plus_y = msh(i,3) + dxdy
+!         minus_y = msh(i,3) - dxdy
+! !
+!         do j = 1, nodes
+!             if (((abs(msh(j,2) - plus_x)) .lt. eps) .and. &
+!             ((abs(msh(j,3) - crdy)) .lt. eps)) then
+!                 conn(i,2) = nint(msh(j,1))
+!             elseif(((abs(msh(j,2) - minus_x)) .lt. eps) .and. &
+!             ((abs(msh(j,3) - crdy)) .lt. eps))then
+!                 conn(i,4) = nint(msh(j,1))
+!             elseif (((abs(msh(j,2) - crdx)) .lt. eps) .and. &
+!             ((abs(msh(j,3) - plus_y)) .lt. eps)) then
+!                 conn(i,3) = nint(msh(j,1))
+!             elseif (((abs(msh(j,2) - crdx)) .lt. eps) .and. &
+!             ((abs(msh(j,3) - minus_y)) .lt. eps)) then
+!                  conn(i,5) = nint(msh(j,1))
+!             elseif((abs(msh(j,3) - crdy) .lt. eps) .and. (plus_x .gt. xmax))then
+!                 conn(i,2) = 0
+!             elseif ((abs(msh(j,2) - crdx) .lt. eps) .and. (plus_y .gt. ymax))then
+!                 conn(i,3) = 0
+!             elseif((abs(msh(j,3) - crdy) .lt. eps) .and. minus_x .lt. 0)then
+!                 conn(i,4) = 0
+!             elseif((abs(msh(j,2) - crdx) .lt. eps) .and. minus_y .lt. 0)then
+!                 conn(i,5) = 0
+!             end if
+!         enddo
+!     enddo
+! return
+! end subroutine connect
+!********************************************************************************
+subroutine connect(msh, conn, nodes, dxdy)
+implicit none
+!
+!External variables
+integer(kind=4) :: nodes
+real(kind=8), intent(in) :: dxdy
+real(kind=8), intent(in), dimension(nodes,4) :: msh
+integer(kind=4), intent(inout), dimension(nodes,9) :: conn
+!
+! Internal variables
+real(kind=8) :: crdx, crdy, plus_x, plus_y, minus_x, minus_y, eps, xmax, ymax
+integer(kind=4) :: i,j
+!
+    eps = dxdy/2
+    xmax = maxval(msh(1:nodes,2))
+    ymax = maxval(msh(1:nodes,3))
+!
+  conn = 0
+    do i=1,nodes
+    ! write(*,*) 'dxdy=', dxdy
+      conn(i,1) = msh(i,1)
+      crdx = msh(i,2)
+      crdy = msh(i,3)
+      plus_x = msh(i,2) + dxdy
+      minus_x = msh(i,2) - dxdy
+      plus_y = msh(i,3) + dxdy
+      minus_y = msh(i,3) - dxdy
+!
+! write(*,*) 'crdx=', crdx, 'crdy=', crdy, 'plusx=', plus_x, 'plusy', plus_y
+      do j = 1, nodes
+        if (((abs(msh(j,2) - plus_x)) .lt. eps) .and. &
+        ((abs(msh(j,3) - crdy)) .lt. eps)) then
+            conn(i,2) = nint(msh(j,1))
+        elseif(((abs(msh(j,2) - minus_x)) .lt. eps) .and. &
+        ((abs(msh(j,3) - crdy)) .lt. eps))then
+            conn(i,4) = nint(msh(j,1))
+        elseif (((abs(msh(j,2) - crdx)) .lt. eps) .and. &
+        ((abs(msh(j,3) - plus_y)) .lt. eps)) then
+            conn(i,3) = nint(msh(j,1))
+        elseif (((abs(msh(j,2) - crdx)) .lt. eps) .and. &
+        ((abs(msh(j,3) - minus_y)) .lt. eps)) then
+             conn(i,5) = nint(msh(j,1))
+        elseif (((abs(msh(j,2) - plus_x)) .lt. eps) .and. &
+        ((abs(msh(j,3) - minus_y)) .lt. eps)) then
+             conn(i,6) = nint(msh(j,1))
+        elseif (((abs(msh(j,2) - plus_x)) .lt. eps) .and. &
+        ((abs(msh(j,3) - plus_y)) .lt. eps)) then
+             conn(i,7) = nint(msh(j,1))
+        elseif (((abs(msh(j,2) - minus_x)) .lt. eps) .and. &
+        ((abs(msh(j,3) - plus_y)) .lt. eps)) then
+             conn(i,8) = nint(msh(j,1))
+        elseif (((abs(msh(j,2) - minus_x)) .lt. eps) .and. &
+        ((abs(msh(j,3) - minus_y)) .lt. eps)) then
+             conn(i,9) = nint(msh(j,1))
+        elseif((abs(msh(j,3) - crdy) .lt. eps) .and. (plus_x .gt. xmax))then
+            conn(i,2) = 0
+            conn(i,6) = 0
+            conn(i,7) = 0
+        elseif ((abs(msh(j,2) - crdx) .lt. eps) .and. (plus_y .gt. ymax))then
+            conn(i,3) = 0
+            conn(i,7) = 0
+            conn(i,8) = 0
+        elseif((abs(msh(j,3) - crdy) .lt. eps) .and. minus_x .lt. 0)then
+            conn(i,4) = 0
+            conn(i,8) = 0
+            conn(i,9) = 0
+        elseif((abs(msh(j,2) - crdx) .lt. eps) .and. minus_y .lt. 0)then
+            conn(i,5) = 0
+            conn(i,6) = 0
+            conn(i,9) = 0
+        end if
+      enddo
+  enddo
+return
+end subroutine connect
+!********************************************************************************
+subroutine ccall(c, n, a, rhs, t)
+use constants
+implicit none
+!
+! External Variables
+integer(kind=4), intent(in) :: n
+integer(kind=4), intent(in), dimension(n,9) :: c
+real(kind=8), intent(inout), dimension(n,n) :: a
+real(kind=8), intent(inout), dimension(n) :: rhs
+real(kind=8), intent(inout), dimension(n) :: t
+!
+!Internal variables
+integer(kind=4) :: i, ii
+integer(kind=4), dimension(9) :: v
+real(kind=8) :: n1, n2, n3, n4, n5, n6, n7, n8, n9
+!
+  do i=1, n
+    if(c(i,2) .eq. 0) then
+      if(c(i,3) .eq. 0) then 
+        n1 = xmax_ymax_n
+        n2 = 0
+        n3 = 0
+        n4 = xmax_ymax_tl
+        n5 = xmax_ymax_td
+        n6 = 0
+        n7 = 0
+        n8 = 0
+        n9 = xmax_ymax_tld
+        ! write(*,*) "xmax_ymax"
+        v(1:9) = c(i,1:9)
+        ! write(*,*) (v(ii),ii=1,5)
+        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+      elseif(c(i,5) .eq. 0) then
+        ! write(*,*) "oy_xmax"
+        n1 = oy_xmax_n
+        n2 = 0
+        n3 = oy_xmax_tt
+        n4 = oy_xmax_tl
+        n5 = 0
+        n6 = 0
+        n7 = 0
+        n8 = oy_xmax_tlt
+        n9 = 0
+        v(1:9) = c(i,1:9)
+        ! write(*,*) (v(ii),ii=1,5)
+        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+      else
+        n1 = wall_one_n
+        n2 = 0
+        n3 = wall_one_tt
+        n4 = wall_one_tl
+        n5 = wall_one_td
+        n6 = 0
+        n7 = wall_one_trt
+        n8 = wall_one_tlt
+        n9 = 0
+        ! write(*,*) "wall_1"
+        v(1:9) = c(i,1:9)
+        ! write(*,*) (v(ii),ii=1,5)
+        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+      endif
+    elseif(c(i,3) .eq. 0) then
+      if(c(i,4) .eq. 0) then
+        n1 = ox_ymax_n
+        n2 = ox_ymax_tr
+        n3 = 0
+        n4 = 0
+        n5 = ox_ymax_td
+        n6 = ox_ymax_trd
+        n7 = 0
+        n8 = 0
+        n9 = 0
+        ! write(*,*) "ox_ymax"
+        v(1:9) = c(i,1:9)
+        ! write(*,*) (v(ii),ii=1,5)
+        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+      elseif(c(i,2) .eq. 0) then
+        cycle
+      else
+        n1 = wall_two_n
+        n2 = wall_two_tr
+        n3 = 0
+        n4 = wall_two_tl
+        n5 = wall_two_td
+        n6 = 0
+        n7 = 0
+        n8 = wall_two_tlt
+        n9 = wall_two_tld
+        ! write(*,*) "wall_2"
+        v(1:9) = c(i,1:9)
+        ! write(*,*) (v(ii),ii=1,5)
+        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+      endif
+    elseif(c(i,4) .eq. 0) then
+      if(c(i,5) .eq. 0) then
+        n1 = oxoy_n
+        n2 = oxoy_tr
+        n3 = oxoy_tt
+        n4 = 0
+        n5 = 0
+        n6 = 0
+        n7 = oxoy_trt
+        n8 = 0
+        n9 = 0
+        ! write(*,*) "ox_oy"
+        v(1:9) = c(i,1:9)
+        ! write(*,*) (v(ii),ii=1,5)
+        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+      elseif(c(i,3) .eq. 0) then
+        cycle
+      else
+        n1 = wall_three_n
+        n2 = wall_three_tr
+        n3 = wall_three_tt
+        n4 = 0
+        n5 = wall_three_td
+        n6 = wall_three_trd
+        n7 = 0
+        n8 = 0
+        n9 = wall_three_tld
+        ! write(*,*) "wall_3"
+        v(1:9) = c(i,1:9)
+        ! write(*,*) (v(ii),ii=1,5)
+        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+      endif
+    elseif(c(i,5) .eq. 0)then
+      if(c(i,4) .eq. 0) then
+        cycle
+      elseif(c(i,2) .eq. 0) then
+        cycle
+      else
+        n1 = wall_four_n
+        n2 = wall_four_tr
+        n3 = wall_four_tt
+        n4 = wall_four_tl
+        n5 = 0
+        n6 = wall_four_trd
+        n7 = wall_four_trt
+        n8 = 0
+        n9 = 0
+        ! write(*,*) "wall_4"
+        v(1:9) = c(i,1:9)
+        ! write(*,*) (v(ii),ii=1,5)
+        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+      endif
+    else
+        n1 = interior_n
+        n2 = interior_tr
+        n3 = interior_tt
+        n4 = interior_tl
+        n5 = interior_td
+        n6 = interior_trd
+        n7 = interior_trt
+        n8 = interior_tlt
+        n9 = interior_tld
+        ! write(*,*) "interior"
+        v(1:9) = c(i,1:9)
+        ! write(*,*) (v(ii),ii=1,5)
+        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+    endif
+  enddo
+!
+return
+end subroutine ccall
+!********************************************************************************
+subroutine create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+implicit none
+!
+! External Variable
+integer(kind=4), intent(in) :: n
+integer(kind=4), intent(in), dimension(9) :: v
+real(kind=8), intent(out), dimension(n,n) :: a
+real(kind=8), intent(out), dimension(n) :: rhs
+real(kind=8), intent(out), dimension(n) :: t
+real(kind=8), intent(in) :: n1, n2, n3, n4, n5, n6, n7, n8, n9
+!
+! Internal variables
+!
+  a(v(1),v(1)) = n1
+  rhs(v(1)) = t(v(1))
+!
+  if(v(2) .ne. 0) then
+    a(v(1),v(2)) = n2
+  ! elseif(v(2) .eq. 0) then
+  !   a(v(1),v(2)) = 0.d0
+  endif
+!
+  if(v(3) .ne. 0)then
+    a(v(1),v(3)) = n3
+  ! elseif(v(3) .eq. 0) then
+  !   a(v(1),v(3)) = 0
+  endif
+!
+  if(v(4) .ne. 0) then
+    a(v(1),v(4)) = n4
+  ! elseif(v(4) .eq. 0) then
+  !   a(v(1),v(4)) = 0
+  endif 
+!
+  if(v(5) .ne. 0) then
+    a(v(1),v(5)) = n5
+  ! elseif(v(5) .eq. 0) then
+  !   a(v(1),v(5)) = 0
+  endif
+!
+  if(v(6) .ne. 0) then
+    a(v(1),v(6)) = n6
+  ! elseif(v(6) .eq. 0) then
+  !   a(v(1),v(6)) = 0
+  endif
+!
+  if(v(7) .ne. 0) then
+    a(v(1),v(7)) = n7
+  ! elseif(v(7) .eq. 0) then
+  !   a(v(1),v(7)) = 0
+  endif
+!
+  if(v(8) .ne. 0) then
+    a(v(1),v(8)) = n8
+  ! elseif(v(8) .eq. 0) then
+  !   a(v(1),v(8)) = 0
+  endif
+!
+  if(v(9) .ne. 0) then
+    a(v(1),v(9)) = n9
+  ! elseif(v(9) .eq. 0) then
+  !   a(v(1),v(9)) = 0
+  endif
+!
+return
+end subroutine create
 !********************************************************************************
 subroutine create_a_steady(msh, t, nodes, alin, rhs, dxdy)
 use parmesh
@@ -2028,11 +2435,11 @@ implicit none
             end if
         enddo
     enddo
-        do kt = 1, nodes
-                if (kt .eq. tempxy)then
+    do kt = 1, nodes
+            if (kt .eq. tempxy)then
                 rhs(kt) = - t(kt) + b1
-                end if
-        end do
+            end if
+    end do
 !
 !
 !=====================================3========================================
@@ -2389,7 +2796,7 @@ implicit none
         row = (int(ymax/dxdy)) + 1
         col = (int(xmax/dxdy)) + 1
 !
-        open(unit=7, file=dirname//iounit, status='unknown')
+        open(unit=7, file=trim(adjustl(trim(dirname)//trim(iounit))), status='unknown')
     write(7,*) 'VARIABLES = "X", "Y", "T"'
     write(7,*) 'ZONE    I =', col, '    J =',  row,'    F=POINT'
         do j = 1, row
@@ -3600,7 +4007,7 @@ use parsolvers
 !   kmax = n
 !
     if (iout .ne. 0)then
-        open(unit=iout, file=dirname//fout, status='unknown')
+        open(unit=iout, file=trim(adjustl(trim(dirname)//fout)), status='unknown')
     endif
   n1 = n + 1
   its = 0
@@ -5146,7 +5553,7 @@ use parsolvers
 !
 ! printing the residual
     if(iout .ne. 0)then
-        open(unit=iout, file=dirname//fout, status='unknown')
+        open(unit=iout, file=trim(adjustl(trim(dirname)//fout)), status='unknown')
     endif
   itr_used = 0
 
