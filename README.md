@@ -1,6 +1,7 @@
 # Heat Transfer Solver 2D
 
 ---
+
 Heat Transfer Solver 2D is a code to solve linear systems that comes from
 discretization of physical domains. It currently solves by using GMRES
 precondiotioned with the ILU family of preconditioners (ILU0, ILUT and MILU0).
@@ -10,6 +11,7 @@ recommend use the code from
 [__releases__](https://github.com/concipaulo/HTS2D/releases) tab, there it will
 be working for the recent case of study that I'm working on (and will be
 working correctly).
+
 ---
 
 ## About the code
@@ -22,6 +24,7 @@ solve linear equations based on _Krylov_ subspace.
 It's wrote in Fortran 95/03, so in theory must be easy to add another
 subroutines wrote in previous Fortran convections like (f90, f77). If you
 intent to request a merge, keep this logic.
+
 ---
 
 ## Using the code
