@@ -19,10 +19,10 @@ working correctly).
 This code has been developed for some time and has the main objective to solve
 systems of linear equations, with high rate of convergence, fast and modular.
 It uses GMRES (_Generalized Minimal Residual_) that is a iterative method for
-solve linear equations based on _Krylov_ subspace. 
+solve linear equations based on _Krylov_ subspace.
 
 It's wrote in Fortran 95/03, so in theory must be easy to add another
-subroutines wrote in previous Fortran convections like (f90, f77). If you
+subroutines wrote in previous Fortran conventions like (f90, f77). If you
 intent to request a merge, keep this logic.
 
 ---
@@ -42,18 +42,18 @@ Fortran or any programming language, just follow the syntax and all be good. In
 relation to where, here are some places you should take a look.
 
 > Subroutines
-  + bound_cond: this subroutine is responsible to set the boundary conditions
+  + `bound_cond`: this subroutine is responsible to set the boundary conditions
     of your problem. Most of the time, you will have a value in the boundary
 that you want to set, like a temperature in some wall. These subroutine uses
 *temp_dist* to set those values base in what coordinate you are. 
-  +temp_dist: A little subroutine that has the function to set a temperature
+  + `temp_dist`: A little subroutine that has the function to set a temperature
 value in some coordinate. Small and simple.
-  + temp_exact: This subroutine is used to generate the exact solution for the
+  + `temp_exact`: This subroutine is used to generate the exact solution for the
     problem if exists. It's quite simple, and it only require the mesh and the
 function that represents the solution of the problem. 
 
 > Modules
-  + Constants: This module is responsible to set the constants of the linear
+  + `Constants`: This module is responsible to set the constants of the linear
     system. Here we define if is going to be solve with second or fourth order.
 Usually the variable represents where is going to be applied and what constant.
 
@@ -61,7 +61,7 @@ Here are some drawbacks from the recent update, there is no simple way to set
 these constants, once they depend on mesh parameters, so __be aware__ that you
 need to change this in every new mesh. A solution is coming.
 
-  + parmesh: define the mesh name, precision, if is steady state or transient.
+  + `parmesh`: define the mesh name, precision, if is steady state or transient.
     It's well commented so just follow the instructions. 
 
 --- 
