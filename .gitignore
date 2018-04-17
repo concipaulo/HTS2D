@@ -1,0 +1,14 @@
+# Ignoring a few files just to keep the repo clean
+#
+tags
+*.mod
+*.plt
+gauss/*
+gmres/*
+ilu0/
+ilut/
+milu/
+ilu1/
+ilu2/
+ilu3/
+ilu4/
