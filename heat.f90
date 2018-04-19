@@ -237,14 +237,14 @@ implicit none
 !must change this subroutine. At this time is working, but it'll be implemented
 !in another more user fliendly way.
     if (choice2 .eq. 1)then
-      call create_a_unsteady(msh, t, nodes, alin, rhs, dxdy)
+      ! call create_a_unsteady(msh, t, nodes, alin, rhs, dxdy)
     elseif(choice2 .eq. 2)then
-      call ccall(conn, nodes, alin, rhs, t)
+      call ccall(conn, nodes, dxdy, alin, rhs, t)
     ! write(80,12) ((alin(i,j),j=1,nodes),i=1,nodes)
     ! 12 format(25(F10.5))
      ! call create_a_steady(msh, t, nodes, alin, rhs, dxdy)
     elseif(choice2 .eq. 3)then
-      call create_4_steady(msh, t, nodes, alin, rhs, dxdy)
+      ! call create_4_steady(msh, t, nodes, alin, rhs, dxdy)
     end if
 !Iterative methods
 !==============================================================================

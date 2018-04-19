@@ -1,14 +1,14 @@
 module parsolvers
 implicit none
 !
-    real*8, parameter :: tol_abs = 1.0d-14   ! Tolerance of residual.
-    real*8, parameter :: tol_rel = 1.0d-15   !Tolerance realitive initial rho
+  real*8, parameter :: tol_abs = 1.0d-14   ! Tolerance of residual.
+  real*8, parameter :: tol_rel = 1.0d-15   !Tolerance realitive initial rho
 ! bug in the maximum iteration, fix it
-    integer*4, parameter :: maxits = 400     ! maximum iteration permited
-    integer*4, parameter :: mr = 100         ! Inner iterations on MGMRES
-    integer*4, parameter :: lfil = 4         ! fill-in elem, good:(5<lfil<10)
-    real*8, parameter :: tol = 0.005d0       ! tolerance of fill-in, good: 0.005
-    integer*4, parameter :: iout = 1         ! if iout NOT zero print residual file
+  integer*4, parameter :: maxits = 400     ! maximum iteration permited
+  integer*4, parameter :: mr = 100         ! Inner iterations on MGMRES
+  integer*4, parameter :: lfil = 4         ! fill-in elem, good:(5<lfil<10)
+  real*8, parameter :: tol = 0.005d0       ! tolerance of fill-in, good: 0.005
+  integer*4, parameter :: iout = 1         ! if iout NOT zero print residual file
 !
 !
 end module parsolvers
@@ -20,7 +20,7 @@ implicit none
 ! Steady state set this = 0
   integer*4, parameter :: itr_max = 1
 ! Norm of temperature between two time steps
-    real*8, parameter :: epsolon = 10.0d-6
+  real*8, parameter :: epsolon = 10.0d-6
 !
 ! msh are options: mesh100, mesh500, mesh1500, mesh2500, 
 ! mesh5000, mesh10000, mesh15000, mesh40000
@@ -70,17 +70,29 @@ module physics
 !
 ! This module contains all physics constants of the problem
 !
-   real*8 :: h = 1.0d0                      ! W/cm²K
-   real*8 :: e = 1.0d0                      ! W/cm³
-   real*8 :: alpha = 1.0d0                  ! cm²/s
-   real*8 :: temp_inf = 273.15d0            ! K
-   real*8 :: k = 1.0d0                      ! W/cmK
-   real*8 :: deltat = 0.00518d0             ! [SECS]
+  real*8 :: h = 1.0d0                      ! W/cm²K
+  real*8 :: e = 1.0d0                      ! W/cm³
+  real*8 :: alpha = 1.0d0                  ! cm²/s
+  real*8 :: temp_inf = 273.15d0            ! K
+  real*8 :: k = 1.0d0                      ! W/cmK
+  real*8 :: deltat = 0.00518d0             ! [SECS]
 !
+  ! fo = (alpha*deltat)/dxdy**2
+  ! rho_c = (k/alpha)
+  ! a1 = (-1.0d0 - 4.0d0*Fo)
+  ! b1 = -((alpha*deltat/k)*e)
+  ! a2 = -(1.0 + 4.0d0*fo + 2.0d0*deltat*alpha*h/k*dxdy)
+  ! b2 = -(2.0*deltat*alpha*h*temp_inf/k*dxdy + alpha*deltat*e/k)
+  ! b3 = -(deltat*e/rho_c)
+  ! b4 = 1.d0/(deltat*k)
+  ! b5 = e/k
+  ! b6 = 1.d0/(deltat*k)
 end module physics
 !******************************************************************************
 module constants
 implicit none
+!
+integer*4, parameter :: transient = 0
 !
 real*8, parameter :: wall_one_n = 1
 real*8, parameter :: wall_one_tt = 0

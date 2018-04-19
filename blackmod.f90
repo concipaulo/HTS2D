@@ -526,130 +526,130 @@ integer(kind=4) :: i,j
 return
 end subroutine connect
 !********************************************************************************
-subroutine ccall(c, n, a, rhs, t)
+subroutine ccall(c, n, dxdy, a, rhs, t)
 use constants
 implicit none
 !
 ! External Variables
 integer(kind=4), intent(in) :: n
+real(kind=8), intent(in) :: dxdy
 integer(kind=4), intent(in), dimension(n,9) :: c
 real(kind=8), intent(inout), dimension(n,n) :: a
 real(kind=8), intent(inout), dimension(n) :: rhs
 real(kind=8), intent(inout), dimension(n) :: t
 !
 !Internal variables
-integer(kind=4) :: i, ii
+integer(kind=4) :: i, ii, p
 integer(kind=4), dimension(9) :: v
-real(kind=8) :: n1, n2, n3, n4, n5, n6, n7, n8, n9
+real(kind=8), dimension(9) :: vn
 !
   do i=1, n
     if(c(i,2) .eq. 0) then
       if(c(i,3) .eq. 0) then 
-        n1 = xmax_ymax_n
-        n2 = 0
-        n3 = 0
-        n4 = xmax_ymax_tl
-        n5 = xmax_ymax_td
-        n6 = 0
-        n7 = 0
-        n8 = 0
-        n9 = xmax_ymax_tld
-        ! write(*,*) "xmax_ymax"
+        p = 6
         v(1:9) = c(i,1:9)
-        ! write(*,*) (v(ii),ii=1,5)
-        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+        if(transient .eq. 0)then
+          vn = 0.d0
+          vn(1) = xmax_ymax_n
+          vn(4) = xmax_ymax_tl
+          vn(5) = xmax_ymax_td
+          vn(9) = xmax_ymax_tld
+        elseif(transient .eq. 1)then
+          call cte_gen(v, dxdy, p, vn)
+        endif
+        call create (v, a, n, rhs, t, vn)
       elseif(c(i,5) .eq. 0) then
-        ! write(*,*) "oy_xmax"
-        n1 = oy_xmax_n
-        n2 = 0
-        n3 = oy_xmax_tt
-        n4 = oy_xmax_tl
-        n5 = 0
-        n6 = 0
-        n7 = 0
-        n8 = oy_xmax_tlt
-        n9 = 0
+        p = 5
         v(1:9) = c(i,1:9)
-        ! write(*,*) (v(ii),ii=1,5)
-        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+        if(transient .eq. 0)then
+          vn = 0.d0
+          vn(1) = oy_xmax_n
+          vn(3) = oy_xmax_tt
+          vn(4) = oy_xmax_tl
+          vn(8) = oy_xmax_tlt
+        elseif(transient .eq. 1)then
+          call cte_gen(v, dxdy, p, vn)
+        endif
+        call create (v, a, n, rhs, t, vn)
       else
-        n1 = wall_one_n
-        n2 = 0
-        n3 = wall_one_tt
-        n4 = wall_one_tl
-        n5 = wall_one_td
-        n6 = 0
-        n7 = wall_one_trt
-        n8 = wall_one_tlt
-        n9 = 0
-        ! write(*,*) "wall_1"
+        p = 1
         v(1:9) = c(i,1:9)
-        ! write(*,*) (v(ii),ii=1,5)
-        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+        if(transient .eq. 0)then
+          vn = 0.d0
+          vn(1) = wall_one_n
+          vn(3) = wall_one_tt
+          vn(4) = wall_one_tl
+          vn(5) = wall_one_td
+          vn(7) = wall_one_trt
+          vn(8) = wall_one_tlt
+        elseif(transient .eq. 1)then
+          call cte_gen(v, dxdy, p, vn)
+        endif
+        call create (v, a, n, rhs, t, vn)
       endif
     elseif(c(i,3) .eq. 0) then
       if(c(i,4) .eq. 0) then
-        n1 = ox_ymax_n
-        n2 = ox_ymax_tr
-        n3 = 0
-        n4 = 0
-        n5 = ox_ymax_td
-        n6 = ox_ymax_trd
-        n7 = 0
-        n8 = 0
-        n9 = 0
-        ! write(*,*) "ox_ymax"
+        p = 7
         v(1:9) = c(i,1:9)
-        ! write(*,*) (v(ii),ii=1,5)
-        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+        if(transient .eq. 0)then
+          vn = 0.d0
+          vn(1) = ox_ymax_n
+          vn(2) = ox_ymax_tr
+          vn(5) = ox_ymax_td
+          vn(6) = ox_ymax_trd
+        elseif(transient .eq. 1)then
+          call cte_gen(v, dxdy, p, vn)
+        endif
+        call create (v, a, n, rhs, t, vn)
       elseif(c(i,2) .eq. 0) then
         cycle
       else
-        n1 = wall_two_n
-        n2 = wall_two_tr
-        n3 = 0
-        n4 = wall_two_tl
-        n5 = wall_two_td
-        n6 = 0
-        n7 = 0
-        n8 = wall_two_tlt
-        n9 = wall_two_tld
-        ! write(*,*) "wall_2"
+        p = 2
         v(1:9) = c(i,1:9)
-        ! write(*,*) (v(ii),ii=1,5)
-        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+        if(transient .eq. 0)then
+          vn = 0.d0
+          vn(1) = wall_two_n
+          vn(2) = wall_two_tr
+          vn(4) = wall_two_tl
+          vn(5) = wall_two_td
+          vn(8) = wall_two_tlt
+          vn(9) = wall_two_tld
+        elseif(transient .eq. 1)then
+          call cte_gen(v, dxdy, p, vn)
+        endif
+        call create (v, a, n, rhs, t, vn)
       endif
     elseif(c(i,4) .eq. 0) then
       if(c(i,5) .eq. 0) then
-        n1 = oxoy_n
-        n2 = oxoy_tr
-        n3 = oxoy_tt
-        n4 = 0
-        n5 = 0
-        n6 = 0
-        n7 = oxoy_trt
-        n8 = 0
-        n9 = 0
-        ! write(*,*) "ox_oy"
+        p = 8
         v(1:9) = c(i,1:9)
-        ! write(*,*) (v(ii),ii=1,5)
-        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+        if(transient .eq. 0)then
+          vn = 0.d0
+          vn(1) = oxoy_n
+          vn(2) = oxoy_tr
+          vn(3) = oxoy_tt
+          vn(7) = oxoy_trt
+        elseif(transient .eq. 1)then
+          call cte_gen(v, dxdy, p, vn)
+        endif
+        call create (v, a, n, rhs, t, vn)
       elseif(c(i,3) .eq. 0) then
         cycle
       else
-        n1 = wall_three_n
-        n2 = wall_three_tr
-        n3 = wall_three_tt
-        n4 = 0
-        n5 = wall_three_td
-        n6 = wall_three_trd
-        n7 = 0
-        n8 = 0
-        n9 = wall_three_tld
-        ! write(*,*) "wall_3"
+        p = 3
         v(1:9) = c(i,1:9)
-        ! write(*,*) (v(ii),ii=1,5)
-        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+        if(transient .eq. 0)then
+          vn = 0.d0
+          vn(1) = wall_three_n
+          vn(2) = wall_three_tr
+          vn(3) = wall_three_tt
+          vn(5) = wall_three_td
+          vn(6) = wall_three_trd
+          vn(9) = wall_three_tld
+        elseif(transient .eq. 1)then
+          call cte_gen(v, dxdy, p, vn)
+        endif
+        call create (v, a, n, rhs, t, vn)
       endif
     elseif(c(i,5) .eq. 0)then
       if(c(i,4) .eq. 0) then
@@ -657,100 +657,185 @@ real(kind=8) :: n1, n2, n3, n4, n5, n6, n7, n8, n9
       elseif(c(i,2) .eq. 0) then
         cycle
       else
-        n1 = wall_four_n
-        n2 = wall_four_tr
-        n3 = wall_four_tt
-        n4 = wall_four_tl
-        n5 = 0
-        n6 = wall_four_trd
-        n7 = wall_four_trt
-        n8 = 0
-        n9 = 0
-        ! write(*,*) "wall_4"
+        p = 4
         v(1:9) = c(i,1:9)
-        ! write(*,*) (v(ii),ii=1,5)
-        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+        if(transient .eq. 0)then
+          vn = 0.d0
+          vn(1) = wall_four_n
+          vn(2) = wall_four_tr
+          vn(3) = wall_four_tt
+          vn(4) = wall_four_tl
+          vn(6) = wall_four_trd
+          vn(7) = wall_four_trt
+        elseif(transient .eq. 1)then
+          call cte_gen(v, dxdy, p, vn)
+        endif
+        call create (v, a, n, rhs, t, vn)
       endif
     else
-        n1 = interior_n
-        n2 = interior_tr
-        n3 = interior_tt
-        n4 = interior_tl
-        n5 = interior_td
-        n6 = interior_trd
-        n7 = interior_trt
-        n8 = interior_tlt
-        n9 = interior_tld
-        ! write(*,*) "interior"
-        v(1:9) = c(i,1:9)
-        ! write(*,*) (v(ii),ii=1,5)
-        call create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+      p = 9
+      v(1:9) = c(i,1:9)
+        if(transient .eq. 0)then
+          vn = 0.d0
+          vn(1) = interior_n
+          vn(2) = interior_tr
+          vn(3) = interior_tt
+          vn(4) = interior_tl
+          vn(5) = interior_td
+          vn(6) = interior_trd
+          vn(7) = interior_trt
+          vn(8) = interior_tlt
+          vn(9) = interior_tld
+        elseif(transient .eq. 1)then
+          call cte_gen(v, dxdy, p, vn)
+        endif
+        call create (v, a, n, rhs, t, vn)
     endif
   enddo
 !
 return
 end subroutine ccall
 !********************************************************************************
-subroutine create (v, a, n, rhs, t, n1, n2, n3, n4, n5, n6, n7, n8, n9)
+subroutine cte_gen(v, dxdy, p, n, t, vn)
+use physics
+!
+!All constants should be declared here, this subroutine will store
+!and calculate all constantes used in another subroutines
+!
+implicit none
+!
+! External variables
+  integer(kind=4), intent(in) :: p, n
+  real(kind=8), intent(in) :: dxdy
+  integer(kind=4), intent(in), dimension(9) :: v
+  real(kind=8), intent(out), dimension(9) :: vn
+  real(kind=8), intent(inout), dimension(n) :: t
+!
+! Internal variables
+  real*8 :: fo, a1, a2, b1, b2, b3, b4, b5, b6
+  real*8 :: rho_c
+!
+! Defining some constants
+!
+  fo = (alpha*deltat)/dxdy**2
+  rho_c = (k/alpha)
+  a1 = (-1.0d0 - 4.0d0*Fo)
+  b1 = -((alpha*deltat/k)*e)
+  a2 = -(1.0 + 4.0d0*fo + 2.0d0*deltat*alpha*h/k*dxdy)
+  b2 = -(2.0*deltat*alpha*h*temp_inf/k*dxdy + alpha*deltat*e/k)
+  b3 = -(deltat*e/rho_c)
+  b4 = 1.d0/(deltat*k)
+  b5 = e/k
+  b6 = 1.d0/(deltat*k)
+!
+  if(p = 1)then
+    vn = 0.d0
+    vn(1) = 1.d0
+  elseif(p = 2)then
+    vn = 0.d0
+    vn(1) = 1.d0
+  elseif(p = 3)then
+    vn = 0.d0
+    vn(1) = a1
+    vn(2) = 2.d0*fo
+    vn(3) = fo
+    vn(5) = fo
+    t(v(1)) = b1 - t(v(1))
+  elseif(p = 4)then
+    vn = 0.d0
+    vn(1) = a1
+    vn(2) = fo
+    vn(3) = 2.d0*fo
+    vn(4) = fo
+    t(v(1)) = b1 - t(v(1))
+  elseif(p = 5)then
+    vn = 0.d0
+    vn(1) = 1.d0
+  elseif(p = 6)then
+    vn = 0.d0
+    vn(1) = 1.d0
+  elseif(p = 7)then
+    vn = 0.d0
+    vn(1) = 1.d0
+  elseif(p = 8)then
+    vn = 0.d0
+    vn(1) = a1
+    vn(2) = 2.d0*fo
+    vn(3) = 2.d0*fo
+    t(v(1)) = b3 - t(v(1))
+  elseif(p = 9)then
+    vn = 0.d0
+    vn(1) = a1
+    vn(2) = fo
+    vn(3) = fo
+    vn(4) = fo
+    vn(5) = fo
+    t(v(1)) = b3 - t(v(1))
+  endif
+!
+return
+end subroutine cte_gen
+!********************************************************************************
+subroutine create (v, a, n, rhs, t, vn)
 implicit none
 !
 ! External Variable
 integer(kind=4), intent(in) :: n
 integer(kind=4), intent(in), dimension(9) :: v
+real(kind=8), intent(in), dimension(9) :: vn
 real(kind=8), intent(out), dimension(n,n) :: a
 real(kind=8), intent(out), dimension(n) :: rhs
 real(kind=8), intent(out), dimension(n) :: t
-real(kind=8), intent(in) :: n1, n2, n3, n4, n5, n6, n7, n8, n9
 !
 ! Internal variables
 !
-  a(v(1),v(1)) = n1
+  a(v(1),v(1)) = vn(1)
   rhs(v(1)) = t(v(1))
 !
   if(v(2) .ne. 0) then
-    a(v(1),v(2)) = n2
+    a(v(1),v(2)) = vn(2)
   ! elseif(v(2) .eq. 0) then
   !   a(v(1),v(2)) = 0.d0
   endif
 !
   if(v(3) .ne. 0)then
-    a(v(1),v(3)) = n3
+    a(v(1),v(3)) = vn(3)
   ! elseif(v(3) .eq. 0) then
   !   a(v(1),v(3)) = 0
   endif
 !
   if(v(4) .ne. 0) then
-    a(v(1),v(4)) = n4
+    a(v(1),v(4)) = vn(4)
   ! elseif(v(4) .eq. 0) then
   !   a(v(1),v(4)) = 0
   endif 
 !
   if(v(5) .ne. 0) then
-    a(v(1),v(5)) = n5
+    a(v(1),v(5)) = vn(5)
   ! elseif(v(5) .eq. 0) then
   !   a(v(1),v(5)) = 0
   endif
 !
   if(v(6) .ne. 0) then
-    a(v(1),v(6)) = n6
+    a(v(1),v(6)) = vn(6)
   ! elseif(v(6) .eq. 0) then
   !   a(v(1),v(6)) = 0
   endif
 !
   if(v(7) .ne. 0) then
-    a(v(1),v(7)) = n7
+    a(v(1),v(7)) = vn(7)
   ! elseif(v(7) .eq. 0) then
   !   a(v(1),v(7)) = 0
   endif
 !
   if(v(8) .ne. 0) then
-    a(v(1),v(8)) = n8
+    a(v(1),v(8)) = vn(8)
   ! elseif(v(8) .eq. 0) then
   !   a(v(1),v(8)) = 0
   endif
 !
   if(v(9) .ne. 0) then
-    a(v(1),v(9)) = n9
+    a(v(1),v(9)) = vn(9)
   ! elseif(v(9) .eq. 0) then
   !   a(v(1),v(9)) = 0
   endif
@@ -2222,41 +2307,6 @@ end do
 return
 end subroutine create_4_steady
 !********************************************************************************
-subroutine cte_gen(fo, a1, b1, a2, b2, b3, b4, b5, b6, dxdy)
-use physics
-use parmesh
-!
-!All constants should be declared here, this subroutine will store
-!and calculate all constantes used in another subroutines
-!
-implicit none
-!
-! Constants
-!
-    real(kind=8) :: dxdy
-    real*8,intent(out) :: fo, a1, a2, b1, b2, b3, b4, b5, b6
-!
-    real*8 :: rho_c
-!
-! Defining some constants
-!
-        Fo = (alpha*deltat)/dxdy**2
-        rho_c = (k/alpha)
-        a1 = (-1.0d0 - 4.0d0*Fo)
-        b1 = -((alpha*deltat/k)*e)
-        a2 = -(1.0 + 4.0d0*fo + 2.0d0*deltat*alpha*h/k*dxdy)
-        b2 = -(2.0*deltat*alpha*h*temp_inf/k*dxdy + alpha*deltat*e/k)
-        b3 = -(deltat*e/rho_c)
-        b4 = 1.d0/(deltat*k)
-        b5 = e/k
-        b6 = 1.d0/(deltat*k)
-!
-!
-!
-!
-return
-end subroutine cte_gen
-!********************************************************************************
 subroutine create_a_unsteady(msh, t, nodes, alin, rhs, dxdy)
 use parmesh
 !
@@ -2282,7 +2332,7 @@ implicit none
     real*8 :: fo, a1, b1, a2, b2, b3, b4, b5, b6
 !
 !    square domain and boundary conditions
-!       8  ________3___________ 7
+!       8 ________3___________ 7
 !         |                   |
 !         |                   |
 !       2 |        i          | 1
