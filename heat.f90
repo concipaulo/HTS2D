@@ -5,7 +5,8 @@ use parmesh
 use chars
 use physics
 use parsolvers
-use constants
+! use constants
+use state
 implicit none
 !
 ! HTS2D is a Fortran 95/03 implementation, of GMRES method to solve a linear
@@ -111,9 +112,9 @@ implicit none
         endif
     endif
 3 format(a, I1)
-    if(choice2 .eq. 1)then
+    if(transient .eq. 1)then
       write(*,*) 'Unsteady State'
-    elseif((choice2 .eq. 2) .or. (choice2 .eq. 3))then
+    elseif(transient .eq. 0)then
       write(*,*) 'Steady State'
     endif
 !
@@ -179,7 +180,7 @@ implicit none
 !
   call connect(msh, conn, nodes, dxdy)
   ! call connect4th(msh,connfth,nodes,dxdy)
-  write(*,13) ((conn(i,j),j=1,9),i=1,nodes)
+  ! write(*,13) ((conn(i,j),j=1,9),i=1,nodes)
 !
 !
 13 format(9(I4))
@@ -220,32 +221,32 @@ implicit none
 5 continue
 !
 !getting out of the loop on steady state
-    if((delt .ne. 0) .and. (choice2 .eq. 2))then
+    if((delt .ne. 0) .and. (transient .eq. 0))then
         goto 25
     endif
 !
 ! Saving a copy of the initial values of solution to mensurate how the method
 !is behaving
-    t(1:nodes) = x(1:nodes)
+  t(1:nodes) = x(1:nodes)
 !
 ! Starting matrix of constants, at each time step for security
-   alin(1:nodes,1:nodes) = 0.0d0
-   rhs(1:nodes) = 0.0d0
+  alin(1:nodes,1:nodes) = 0.0d0
+  rhs(1:nodes) = 0.0d0
 !
 ! Subroutine responsible to generate constants, this is still an odd way to do
 !it, take and example, if you want to simulate diferent boundary conditions you
 !must change this subroutine. At this time is working, but it'll be implemented
 !in another more user fliendly way.
-    if (choice2 .eq. 1)then
+  call ccall(conn, nodes, dxdy, alin, rhs, t)
+    ! if (choice2 .eq. 1)then
       ! call create_a_unsteady(msh, t, nodes, alin, rhs, dxdy)
-    elseif(choice2 .eq. 2)then
-      call ccall(conn, nodes, dxdy, alin, rhs, t)
+    ! elseif(choice2 .eq. 2)then
     ! write(80,12) ((alin(i,j),j=1,nodes),i=1,nodes)
     ! 12 format(25(F10.5))
      ! call create_a_steady(msh, t, nodes, alin, rhs, dxdy)
-    elseif(choice2 .eq. 3)then
+    ! elseif(choice2 .eq. 3)then
       ! call create_4_steady(msh, t, nodes, alin, rhs, dxdy)
-    end if
+    ! end if
 !Iterative methods
 !==============================================================================
 !solve the linear system with gauss-siedel iterative method
@@ -451,7 +452,7 @@ implicit none
 !
 !storing alin in sparse triplet form
         call pre_gmres(alin, nodes, a, ia, ja, nz_num)
-        ! if(allocated(alin)) deallocate(alin)
+        if(allocated(alin)) deallocate(alin)
 !
 !storing a(nz_num), ja(nz_num) and ia(nz_num) ia CSR
     if (delt .eq. 0)then
@@ -555,7 +556,7 @@ implicit none
 !with 30k nodes, storing real*8 variables, will need up to 6GB of RAM), we need
 !to reallocate that space.
 ! write(*,*) "heellloooooo"
-        ! allocate(alin(nodes, nodes))
+    allocate(alin(nodes, nodes))
 !
     goto 5
    end if

@@ -33,9 +33,9 @@ implicit none
         .and. msh(i,2) .ne. 0.0)then
         temp(i) = 0.0d0
 ! care with steady state is needed
-        crdx = msh(i,2)
-            call temp_dist(crdx, t)
-        temp(i) = t
+        ! crdx = msh(i,2)
+            ! call temp_dist(crdx, t)
+        ! temp(i) = t
 !y = ymax
         elseif(msh(i,3) .eq. myval)then
        temp(i) = 0.0d0
@@ -528,6 +528,7 @@ end subroutine connect
 !********************************************************************************
 subroutine ccall(c, n, dxdy, a, rhs, t)
 use constants
+use state
 implicit none
 !
 ! External Variables
@@ -555,7 +556,7 @@ real(kind=8), dimension(9) :: vn
           vn(5) = xmax_ymax_td
           vn(9) = xmax_ymax_tld
         elseif(transient .eq. 1)then
-          call cte_gen(v, dxdy, p, vn)
+          call cte_gen(v, dxdy, p, n, t, vn)
         endif
         call create (v, a, n, rhs, t, vn)
       elseif(c(i,5) .eq. 0) then
@@ -568,7 +569,7 @@ real(kind=8), dimension(9) :: vn
           vn(4) = oy_xmax_tl
           vn(8) = oy_xmax_tlt
         elseif(transient .eq. 1)then
-          call cte_gen(v, dxdy, p, vn)
+          call cte_gen(v, dxdy, p, n, t, vn)
         endif
         call create (v, a, n, rhs, t, vn)
       else
@@ -583,7 +584,7 @@ real(kind=8), dimension(9) :: vn
           vn(7) = wall_one_trt
           vn(8) = wall_one_tlt
         elseif(transient .eq. 1)then
-          call cte_gen(v, dxdy, p, vn)
+          call cte_gen(v, dxdy, p, n, t, vn)
         endif
         call create (v, a, n, rhs, t, vn)
       endif
@@ -598,7 +599,7 @@ real(kind=8), dimension(9) :: vn
           vn(5) = ox_ymax_td
           vn(6) = ox_ymax_trd
         elseif(transient .eq. 1)then
-          call cte_gen(v, dxdy, p, vn)
+          call cte_gen(v, dxdy, p, n, t, vn)
         endif
         call create (v, a, n, rhs, t, vn)
       elseif(c(i,2) .eq. 0) then
@@ -615,7 +616,7 @@ real(kind=8), dimension(9) :: vn
           vn(8) = wall_two_tlt
           vn(9) = wall_two_tld
         elseif(transient .eq. 1)then
-          call cte_gen(v, dxdy, p, vn)
+          call cte_gen(v, dxdy, p, n, t, vn)
         endif
         call create (v, a, n, rhs, t, vn)
       endif
@@ -630,7 +631,7 @@ real(kind=8), dimension(9) :: vn
           vn(3) = oxoy_tt
           vn(7) = oxoy_trt
         elseif(transient .eq. 1)then
-          call cte_gen(v, dxdy, p, vn)
+          call cte_gen(v, dxdy, p, n, t, vn)
         endif
         call create (v, a, n, rhs, t, vn)
       elseif(c(i,3) .eq. 0) then
@@ -647,7 +648,7 @@ real(kind=8), dimension(9) :: vn
           vn(6) = wall_three_trd
           vn(9) = wall_three_tld
         elseif(transient .eq. 1)then
-          call cte_gen(v, dxdy, p, vn)
+          call cte_gen(v, dxdy, p, n, t, vn)
         endif
         call create (v, a, n, rhs, t, vn)
       endif
@@ -668,7 +669,7 @@ real(kind=8), dimension(9) :: vn
           vn(6) = wall_four_trd
           vn(7) = wall_four_trt
         elseif(transient .eq. 1)then
-          call cte_gen(v, dxdy, p, vn)
+          call cte_gen(v, dxdy, p, n, t, vn)
         endif
         call create (v, a, n, rhs, t, vn)
       endif
@@ -687,7 +688,7 @@ real(kind=8), dimension(9) :: vn
           vn(8) = interior_tlt
           vn(9) = interior_tld
         elseif(transient .eq. 1)then
-          call cte_gen(v, dxdy, p, vn)
+          call cte_gen(v, dxdy, p, n, t, vn)
         endif
         call create (v, a, n, rhs, t, vn)
     endif
@@ -728,42 +729,42 @@ implicit none
   b5 = e/k
   b6 = 1.d0/(deltat*k)
 !
-  if(p = 1)then
+  if(p .eq. 1)then
     vn = 0.d0
     vn(1) = 1.d0
-  elseif(p = 2)then
+  elseif(p .eq. 2)then
     vn = 0.d0
     vn(1) = 1.d0
-  elseif(p = 3)then
+  elseif(p .eq. 3)then
     vn = 0.d0
     vn(1) = a1
     vn(2) = 2.d0*fo
     vn(3) = fo
     vn(5) = fo
     t(v(1)) = b1 - t(v(1))
-  elseif(p = 4)then
+  elseif(p .eq. 4)then
     vn = 0.d0
     vn(1) = a1
     vn(2) = fo
     vn(3) = 2.d0*fo
     vn(4) = fo
     t(v(1)) = b1 - t(v(1))
-  elseif(p = 5)then
+  elseif(p .eq. 5)then
     vn = 0.d0
     vn(1) = 1.d0
-  elseif(p = 6)then
+  elseif(p .eq. 6)then
     vn = 0.d0
     vn(1) = 1.d0
-  elseif(p = 7)then
+  elseif(p .eq. 7)then
     vn = 0.d0
     vn(1) = 1.d0
-  elseif(p = 8)then
+  elseif(p .eq. 8)then
     vn = 0.d0
     vn(1) = a1
     vn(2) = 2.d0*fo
     vn(3) = 2.d0*fo
     t(v(1)) = b3 - t(v(1))
-  elseif(p = 9)then
+  elseif(p .eq. 9)then
     vn = 0.d0
     vn(1) = a1
     vn(2) = fo
@@ -2346,7 +2347,7 @@ implicit none
         xmax = maxval(msh(1:nodes,2))
         ymax = maxval(msh(1:nodes,3))
 !
-      call cte_gen(fo, a1, b1, a2, b2, b3, b4, b5, b6, dxdy)
+      ! call cte_gen(fo, a1, b1, a2, b2, b3, b4, b5, b6, dxdy)
 !
 !
         eps = dxdy/2.0

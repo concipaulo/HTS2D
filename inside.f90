@@ -18,14 +18,14 @@ implicit none
 !
 ! Number of outer iterations on main program
 ! Steady state set this = 0
-  integer*4, parameter :: itr_max = 1
+  integer*4, parameter :: itr_max = 200
 ! Norm of temperature between two time steps
   real*8, parameter :: epsolon = 10.0d-6
 !
 ! msh are options: mesh100, mesh500, mesh1500, mesh2500, 
 ! mesh5000, mesh10000, mesh15000, mesh40000
   character(*), parameter :: extension = '.dat'
-  character(*), parameter :: mshname = 'meshrtgl500'
+  character(*), parameter :: mshname = 'mesh500'
 ! concatenating the mesh name and the extension
   character(*), parameter :: meshfile = mshname//extension
 ! Chosing the iterative method and the preconditioner
@@ -35,7 +35,7 @@ implicit none
 ! 4 == GMRES w/ ILUT
 ! 5 == GMRES w/ MILU0
 ! 6 == GMRES w/ ILU(K)
-  integer(kind=4), parameter :: choice = 6
+  integer(kind=4), parameter :: choice = 3
 !
 ! Chosing the type of analysis
 ! 1 == unsteady state
@@ -43,8 +43,7 @@ implicit none
 ! 3 == steady state fourth order discretization
 !
 ! REMEMBER IF IS IN STATE STATE SET ITR_MAX = 0
-    integer(kind=4), parameter :: choice2 = 2
-!
+  integer(kind=4), parameter :: choice2 = 1
 !
 ! This parameter is for subroutine log and sol_exact
 ! if the problem has a analytical solution this parameter
@@ -52,6 +51,12 @@ implicit none
     integer(kind=4), parameter :: choice3 = 1
 !
 end module parmesh
+!******************************************************************************
+module state
+implicit none
+!
+      integer*4, parameter :: transient = 1
+end module state
 !******************************************************************************
 module chars
 implicit none
@@ -77,22 +82,11 @@ module physics
   real*8 :: k = 1.0d0                      ! W/cmK
   real*8 :: deltat = 0.00518d0             ! [SECS]
 !
-  ! fo = (alpha*deltat)/dxdy**2
-  ! rho_c = (k/alpha)
-  ! a1 = (-1.0d0 - 4.0d0*Fo)
-  ! b1 = -((alpha*deltat/k)*e)
-  ! a2 = -(1.0 + 4.0d0*fo + 2.0d0*deltat*alpha*h/k*dxdy)
-  ! b2 = -(2.0*deltat*alpha*h*temp_inf/k*dxdy + alpha*deltat*e/k)
-  ! b3 = -(deltat*e/rho_c)
-  ! b4 = 1.d0/(deltat*k)
-  ! b5 = e/k
-  ! b6 = 1.d0/(deltat*k)
 end module physics
 !******************************************************************************
 module constants
 implicit none
 !
-integer*4, parameter :: transient = 0
 !
 real*8, parameter :: wall_one_n = 1
 real*8, parameter :: wall_one_tt = 0
