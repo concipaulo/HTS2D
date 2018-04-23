@@ -51,8 +51,20 @@ value in some coordinate. Small and simple.
   + `temp_exact`: This subroutine is used to generate the exact solution for the
     problem if exists. It's quite simple, and it only require the mesh and the
 function that represents the solution of the problem. 
+  + `reddy`: this subroutine is the exact solution for the unsteady case. If
+    another problem is analised, and have exact solution, a similar subroutine
+should be implemented.
+  + `cte_gen`: This is a very __important__ subroutine, it's there where the
+    _transient_ constants are defined. If another discretization (case) is implemented, the values should change here and in the `physics` module.
 
 > Modules
+  + `State`: This module have only one parameter that is responsible to switch
+    between the steady and unsteady state.
+
+  + `Physics`: This module hosts the physical properties of material and
+    enviroment ( keep in mind that changing the parameters will alter the
+`cte_gen` subroutine).
+
   + `Constants`: This module is responsible to set the constants of the linear
     system. Here we define if is going to be solve with second or fourth order.
 Usually the variable represents where is going to be applied and what constant.
@@ -63,6 +75,11 @@ need to change this in every new mesh. A solution is coming.
 
   + `parmesh`: define the mesh name, precision, if is steady state or transient.
     It's well commented so just follow the instructions. 
+
+    - `itr_max`: number of the maximum iteration permitted.
+    - `epsolon`: norm of temperature between two solutions, in unsteady state.
+    - `choice`: choose the solver to be used.
+    - `choice3`: print the exact solution if exists.
 
 --- 
 
