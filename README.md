@@ -85,4 +85,4 @@ need to change this in every new mesh. A solution is coming.
 
 ## Contact
 
-Feel free to open an issue or send me an email (pauloagconci@gmail.com).
+Feel free to open an issue or send me an email (conci@pm.me).
